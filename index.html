@@ -83,6 +83,24 @@
         .modal-overlay.active .modal-content {
             transform: scale(1);
         }
+        /* Auth Tab Styles */
+        .auth-tab {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #6b7280;
+        }
+        .auth-tab.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .auth-form-content {
+            display: none;
+        }
+        .auth-form-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -402,24 +420,51 @@
     <!-- NEW: Auth Modal -->
     <div id="auth-modal" class="modal-overlay" onclick="closeModal('auth-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 class="text-2xl font-bold text-center mb-4">Login or Sign Up</h2>
-            <p id="auth-error" class="text-red-500 text-sm text-center mb-4"></p>
-            <form id="email-form">
-                <div class="space-y-4">
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                        <input type="email" id="email" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+            <div class="flex border-b border-slate-200 mb-4">
+                <div id="login-tab" class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+                <div id="signup-tab" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
+            </div>
+            
+            <p id="auth-error" class="text-red-500 text-sm text-center mb-4 h-4"></p>
+
+            <!-- Login Form -->
+            <div id="login-form-content" class="auth-form-content active">
+                <form id="login-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input type="email" id="login-email" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                            <input type="password" id="login-password" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                        </div>
                     </div>
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                        <input type="password" id="password" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                    <div class="mt-6">
+                        <button type="button" onclick="handleEmailLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">Login</button>
                     </div>
-                </div>
-                <div class="flex space-x-2 mt-6">
-                    <button type="button" onclick="handleEmailLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">Login</button>
-                    <button type="button" onclick="handleEmailSignUp()" class="w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-slate-700 transition-colors">Sign Up</button>
-                </div>
-            </form>
+                </form>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="signup-form-content" class="auth-form-content">
+                <form id="signup-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="signup-email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input type="email" id="signup-email" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label for="signup-password" class="block text-sm font-medium text-slate-700 mb-1">Password (min. 6 characters)</label>
+                            <input type="password" id="signup-password" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button type="button" onclick="handleEmailSignUp()" class="w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-slate-700 transition-colors">Create Account</button>
+                    </div>
+                </form>
+            </div>
+
             <div class="my-4 flex items-center">
                 <div class="flex-grow border-t border-slate-300"></div>
                 <span class="flex-shrink mx-4 text-slate-400">OR</span>
@@ -517,6 +562,7 @@
         window.handleEmailSignUp = handleEmailSignUp;
         window.handleGoogleSignIn = handleGoogleSignIn;
         window.handleSignOut = handleSignOut;
+        window.switchAuthTab = switchAuthTab;
 
 
         // --- App State & Navigation ---
@@ -1138,13 +1184,29 @@
         }
         
         // --- NEW AUTH HANDLERS ---
+        function switchAuthTab(tab) {
+            setAuthError('');
+            document.getElementById('login-tab').classList.toggle('active', tab === 'login');
+            document.getElementById('signup-tab').classList.toggle('active', tab === 'signup');
+            document.getElementById('login-form-content').classList.toggle('active', tab === 'login');
+            document.getElementById('signup-form-content').classList.toggle('active', tab === 'signup');
+        }
+
         function setAuthError(message) {
-            document.getElementById('auth-error').textContent = message;
+            let friendlyMessage = message;
+            if (message.includes("auth/email-already-in-use")) {
+                friendlyMessage = "This email is already registered. Please log in instead.";
+            } else if (message.includes("auth/wrong-password") || message.includes("auth/user-not-found")) {
+                friendlyMessage = "Invalid email or password. Please try again.";
+            } else if (message.includes("auth/invalid-email")) {
+                friendlyMessage = "Please enter a valid email address.";
+            }
+            document.getElementById('auth-error').textContent = friendlyMessage;
         }
 
         async function handleEmailSignUp() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
             setAuthError('');
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
@@ -1155,8 +1217,8 @@
         }
 
         async function handleEmailLogin() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             setAuthError('');
             try {
                 await signInWithEmailAndPassword(auth, email, password);
@@ -1188,4 +1250,3 @@
     </script>
 </body>
 </html>
-
