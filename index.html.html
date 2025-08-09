@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Spoke & Compass</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .unit-toggle-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .unit-toggle-btn {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .checklist-item.checked {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+        .accordion-arrow.open {
+            transform: rotate(180deg);
+        }
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="app" class="max-w-xl mx-auto p-4 sm:p-6">
+
+        <!-- App Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">The Spoke & Compass</h1>
+            <p class="text-slate-500 mt-2">Your guide to a better ride.</p>
+            <div id="auth-container" class="text-xs text-slate-400 mt-2 h-4">
+                 <!-- Auth UI will be rendered here -->
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav id="main-nav" class="grid grid-cols-5 gap-1 mb-8 p-1 bg-slate-200 rounded-lg">
+             <button onclick="showPage('home')" class="nav-button flex-1 text-center py-2 px-3 rounded-md text-xs sm:text-sm font-medium transition-colors duration-300">Home</button>
+             <button onclick="showPage('fit-finder')" class="nav-button flex-1 text-center py-2 px-3 rounded-md text-xs sm:text-sm font-medium transition-colors duration-300">Fit Finder</button>
+             <button onclick="showPage('pressure-dial')" class="nav-button flex-1 text-center py-2 px-3 rounded-md text-xs sm:text-sm font-medium transition-colors duration-300">Pressure Dial</button>
+             <button onclick="showPage('resources')" class="nav-button flex-1 text-center py-2 px-3 rounded-md text-xs sm:text-sm font-medium transition-colors duration-300">Resources</button>
+             <button onclick="showPage('garage')" class="nav-button flex-1 text-center py-2 px-3 rounded-md text-xs sm:text-sm font-medium transition-colors duration-300">Garage</button>
+        </nav>
+
+        <main>
+            <!-- ======================= -->
+            <!--      Home Page        -->
+            <!-- ======================= -->
+            <div id="home" class="page active">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-slate-900">Welcome!</h2>
+                    <p class="mb-6 text-slate-600">Your digital companion for every ride. Get your bike fit, dial in your tire pressure, or manage your bike maintenance in the Garage.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="showPage('fit-finder')" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors duration-300">
+                            Start Fit Finder
+                        </button>
+                        <button onclick="showPage('garage')" class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors duration-300">
+                            Go to My Garage
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================= -->
+            <!--     Fit Finder Page     -->
+            <!-- ======================= -->
+            <div id="fit-finder" class="page">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-1 text-slate-900">Bike Fit Finder</h2>
+                    <p class="text-slate-500 mb-6">Enter your measurements to get a recommended bike size.</p>
+
+                    <form id="fit-form" onsubmit="event.preventDefault(); calculateFit();">
+                        <div class="space-y-4">
+                             <div>
+                                <label for="bike-category" class="block text-sm font-medium text-slate-700 mb-1">1. Select Bike Type</label>
+                                <select id="bike-category" class="form-select w-full p-2 border border-slate-300 rounded-md transition bg-white">
+                                    <option value="road">Road Bike</option>
+                                    <option value="gravel">Gravel Bike</option>
+                                    <option value="tt">Time Trial (TT) Bike</option>
+                                    <option value="mtb">Mountain Bike (MTB)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">2. Measurement Units</label>
+                                <div class="flex rounded-lg p-1 bg-slate-200">
+                                    <button type="button" id="unit-metric-btn" onclick="switchUnits('metric')" class="unit-toggle-btn flex-1 py-1 rounded-md text-sm font-medium transition-colors">Metric (cm)</button>
+                                    <button type="button" id="unit-imperial-btn" onclick="switchUnits('imperial')" class="unit-toggle-btn flex-1 py-1 rounded-md text-sm font-medium transition-colors">Imperial (inches)</button>
+                                </div>
+                            </div>
+                        
+                            <!-- Metric Inputs -->
+                            <div id="metric-inputs" class="space-y-4">
+                                <div>
+                                    <label for="height-cm" class="block text-sm font-medium text-slate-700 mb-1">3. Total Height (cm)</label>
+                                    <input type="number" id="height-cm" class="form-input w-full p-2 border border-slate-300 rounded-md transition" placeholder="e.g., 178">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="inseam-cm" class="block text-sm font-medium text-slate-700">4. Inseam (cm)</label>
+                                        <img src="https://placehold.co/24x24/e0e7ff/3730a3?text=?" class="rounded-full cursor-help" title="This is a crucial measurement. See the guide below for details." alt="Inseam measurement help icon"
+                                        onerror="this.onerror=null;this.src='https://placehold.co/24x24/e0e7ff/3730a3?text=?';">
+                                    </div>
+                                    <input type="number" id="inseam-cm" class="form-input w-full p-2 border border-slate-300 rounded-md transition" placeholder="e.g., 82">
+                                </div>
+                            </div>
+
+                            <!-- Imperial Inputs -->
+                            <div id="imperial-inputs" class="space-y-4" style="display: none;">
+                                <div>
+                                    <label for="height-in" class="block text-sm font-medium text-slate-700 mb-1">3. Total Height (inches)</label>
+                                    <input type="number" step="0.1" id="height-in" class="form-input w-full p-2 border border-slate-300 rounded-md transition" placeholder="e.g., 70">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="inseam-in" class="block text-sm font-medium text-slate-700">4. Inseam (inches)</label>
+                                        <img src="https://placehold.co/24x24/e0e7ff/3730a3?text=?" class="rounded-full cursor-help" title="This is a crucial measurement. See the guide below for details." alt="Inseam measurement help icon"
+                                        onerror="this.onerror=null;this.src='https://placehold.co/24x24/e0e7ff/3730a3?text=?';">
+                                    </div>
+                                    <input type="number" step="0.1" id="inseam-in" class="form-input w-full p-2 border border-slate-300 rounded-md transition" placeholder="e.g., 32.5">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="riding-style" class="block text-sm font-medium text-slate-700 mb-1">5. Primary Riding Style</label>
+                                <select id="riding-style" class="form-select w-full p-2 border border-slate-300 rounded-md transition bg-white">
+                                    <option value="race">Race / Aggressive</option>
+                                    <option value="endurance">Endurance / All-Around</option>
+                                    <option value="comfort">Comfort / Relaxed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors duration-300">
+                            Calculate My Fit
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- How to Measure Accordion -->
+                <div class="bg-white p-6 rounded-xl shadow-md mt-4">
+                    <button onclick="toggleAccordion('measure-guide', 'accordion-arrow-measure')" class="w-full flex justify-between items-center text-left">
+                        <h3 class="text-lg font-bold text-slate-900">How to Take Your Measurements</h3>
+                        <svg id="accordion-arrow-measure" class="w-5 h-5 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="measure-guide" class="accordion-content mt-4 pt-4 border-t border-slate-200">
+                        <div class="prose prose-slate max-w-none text-slate-600">
+                            <h4 class="font-semibold">Measuring Your Inseam (Most Important)</h4>
+                            <img src="https://placehold.co/600x200/eef2ff/4338ca?text=Diagram+of+Inseam+Measurement" class="w-full rounded-lg my-2" alt="Diagram showing how to measure cycling inseam with a book."
+                            onerror="this.onerror=null;this.src='https://placehold.co/600x200/eef2ff/4338ca?text=Inseam+Diagram';">
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li>Stand barefoot with your back against a wall, feet about 6-8 inches (15-20cm) apart.</li>
+                                <li>Take a large hardcover book and place it between your legs, spine-up.</li>
+                                <li>Firmly pull the book upwards into your crotch, simulating the pressure of a bike saddle. Keep the book level with the floor.</li>
+                                <li>Have a friend measure from the top edge of the book's spine straight down to the floor. This is your inseam. Take 2-3 measurements and use the average.</li>
+                            </ol>
+                            <h4 class="font-semibold mt-6">How to Read a Tape Measure (Imperial)</h4>
+                            <p>When measuring in inches, the lines between the numbers represent fractions. For bike fitting, measuring to the nearest 1/4 or 1/8 inch is plenty accurate (e.g., 32 and 1/4 inches can be entered as 32.25).</p>
+                             <img src="https://placehold.co/600x150/f0f9ff/0c4a6e?text=Image+of+Imperial+Tape+Measure+Fractions" class="w-full rounded-lg my-2" alt="Diagram showing how to read fractions of an inch on a tape measure."
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x150/f0f9ff/0c4a6e?text=Tape+Measure+Diagram';">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- ======================= -->
+            <!--   Fit Results Page      -->
+            <!-- ======================= -->
+            <div id="fit-results" class="page">
+                 <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-slate-900">Your Bike Fit Recommendation</h2>
+                    <div class="space-y-4 text-center">
+                        <div>
+                            <p id="frame-size-label" class="text-sm text-slate-500">Recommended Frame Size</p>
+                            <p id="frame-size-result" class="text-4xl font-bold text-blue-600">-</p>
+                        </div>
+                        <div>
+                            <p id="saddle-height-label" class="text-sm text-slate-500">Starting Saddle Height</p>
+                            <p id="saddle-height-result" class="text-2xl font-semibold text-slate-800">-</p>
+                            <p id="saddle-height-subtext" class="text-xs text-slate-400">(from center of bottom bracket to top of saddle)</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-slate-100 rounded-lg">
+                        <h3 class="font-semibold text-slate-800">What this means:</h3>
+                        <p id="fit-explanation" class="text-sm text-slate-600 mt-2"></p>
+                    </div>
+                    
+                    <!-- Bike Matcher Results -->
+                    <div id="bike-matcher-results" class="mt-6">
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Bike Recommendations</h3>
+                        <div id="bike-list" class="space-y-3">
+                            <!-- Matching bikes will be injected here by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-3 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 rounded-r-lg">
+                        <p class="text-sm"><strong>Disclaimer:</strong> This is an excellent starting point. For a perfect setup, we always recommend a professional in-person bike fit.</p>
+                    </div>
+                    <button onclick="showPage('fit-finder')" class="mt-6 w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-slate-700 transition-colors duration-300">
+                        Calculate Again
+                    </button>
+                 </div>
+            </div>
+
+
+            <!-- ======================= -->
+            <!--   Pressure Dial Page    -->
+            <!-- ======================= -->
+            <div id="pressure-dial" class="page">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-1 text-slate-900">Advanced Pressure Dial</h2>
+                    <p class="text-slate-500 mb-6">Find your optimal tire pressure for today's ride.</p>
+                    <form id="pressure-form" onsubmit="event.preventDefault(); calculatePressure();">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="rider-weight" class="block text-sm font-medium text-slate-700 mb-1">Your Weight (lbs)</label>
+                                <input type="number" id="rider-weight" class="form-input w-full p-2 border border-slate-300 rounded-md transition" placeholder="e.g., 165" required>
+                            </div>
+                             <div>
+                                <label for="bike-weight" class="block text-sm font-medium text-slate-700 mb-1">Bike Weight (lbs)</label>
+                                <input type="number" id="bike-weight" class="form-input w-full p-2 border border-slate-300 rounded-md transition" value="20" placeholder="e.g., 20" required>
+                            </div>
+                             <div>
+                                <label for="tire-width" class="block text-sm font-medium text-slate-700 mb-1">Tire Width (mm)</label>
+                                <select id="tire-width" class="form-select w-full p-2 border border-slate-300 rounded-md transition bg-white">
+                                    <option value="25">25mm</option>
+                                    <option value="28" selected>28mm</option>
+                                    <option value="30">30mm</option>
+                                    <option value="32">32mm</option>
+                                    <option value="35">35mm</option>
+                                    <option value="38">38mm</option>
+                                    <option value="42">42mm</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="bike-type" class="block text-sm font-medium text-slate-700 mb-1">Bike Type</label>
+                                <select id="bike-type" class="form-select w-full p-2 border border-slate-300 rounded-md transition bg-white">
+                                    <option value="road" selected>Road</option>
+                                    <option value="gravel">Gravel</option>
+                                    <option value="tt">Time Trial (TT)</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label for="tube-type" class="block text-sm font-medium text-slate-700 mb-1">Tire System</label>
+                                <select id="tube-type" class="form-select w-full p-2 border border-slate-300 rounded-md transition bg-white">
+                                    <option value="tubeless" selected>Tubeless</option>
+                                    <option value="latex">Latex Tube</option>
+                                    <option value="tpu">TPU Tube</option>
+                                    <option value="butyl">Standard Butyl Tube</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="tire-quality" class="block text-sm font-medium text-slate-700 mb-1">Tire Quality</label>
+                                <select id="tire-quality" class="form-select w-full p-2 border border-slate-300 rounded-md transition bg-white">
+                                    <option value="performance" selected>Performance / Race</option>
+                                    <option value="standard">Standard / Training</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors duration-300">
+                            Calculate Pressure
+                        </button>
+                    </form>
+                    
+                    <div id="pressure-results" class="mt-6 pt-6 border-t border-slate-200" style="display: none;">
+                         <h3 class="text-xl font-bold text-center mb-4 text-slate-900">Recommended Pressure (PSI)</h3>
+                         <div class="grid grid-cols-2 gap-4 text-center">
+                             <div>
+                                 <p class="text-sm text-slate-500">Front Tire</p>
+                                 <p id="front-pressure-result" class="text-4xl font-bold text-blue-600">-</p>
+                             </div>
+                             <div>
+                                 <p class="text-sm text-slate-500">Rear Tire</p>
+                                 <p id="rear-pressure-result" class="text-4xl font-bold text-slate-800">-</p>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ======================= -->
+            <!--     Resources Page      -->
+            <!-- ======================= -->
+            <div id="resources" class="page">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-slate-900">Rider Resources</h2>
+                    
+                    <!-- Checklists -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 mb-3">Ride Checklists</h3>
+                        <div id="checklist-accordion" class="space-y-2">
+                            <!-- Accordion items will be generated here -->
+                        </div>
+                        <button onclick="resetAllChecklists()" class="mt-4 text-sm text-blue-600 hover:underline">Reset All Checklists</button>
+                    </div>
+
+                    <!-- Anatomy of a Bike -->
+                    <div class="mt-6 pt-6 border-t border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-800 mb-3">Anatomy of a Bike</h3>
+                        <div class="relative">
+                            <img src="https://placehold.co/600x400/eef2ff/4338ca?text=Interactive+Bike+Diagram" class="w-full rounded-lg" alt="Diagram of a road bike." onerror="this.onerror=null;this.src='https://placehold.co/600x400/eef2ff/4338ca?text=Bike+Diagram';">
+                            <!-- Interactive Hotspots -->
+                            <button onclick="showPartInfo('Saddle', 'The part of the bike you sit on. Proper height and position are crucial for comfort and power.')" class="absolute w-4 h-4 bg-red-500 rounded-full border-2 border-white" style="top: 33%; left: 45%;"></button>
+                            <button onclick="showPartInfo('Stem', 'Connects the handlebars to the steerer tube of the fork. Its length and angle affect your reach and riding position.')" class="absolute w-4 h-4 bg-red-500 rounded-full border-2 border-white" style="top: 40%; left: 75%;"></button>
+                            <button onclick="showPartInfo('Derailleur', 'The mechanism that moves the chain to shift gears. You have a rear derailleur and often a front derailleur.')" class="absolute w-4 h-4 bg-red-500 rounded-full border-2 border-white" style="top: 65%; left: 20%;"></button>
+                             <button onclick="showPartInfo('Crankset', 'The component that the pedals are attached to, which rotates to drive the chain.')" class="absolute w-4 h-4 bg-red-500 rounded-full border-2 border-white" style="top: 70%; left: 50%;"></button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ======================= -->
+            <!--   NEW: Garage Page      -->
+            <!-- ======================= -->
+            <div id="garage" class="page">
+                <!-- This container will hold either the list or the detail view -->
+            </div>
+
+        </main>
+        
+        <footer class="text-center mt-12 text-slate-400 text-sm">
+            <p>&copy; 2025 The Spoke & Compass. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <!-- Modal for Bike Part Info -->
+    <div id="part-info-modal" class="modal-overlay" onclick="closeModal('part-info-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 id="part-name" class="text-xl font-bold mb-2">Part Name</h3>
+            <p id="part-description" class="text-slate-600">Part description goes here.</p>
+            <button onclick="closeModal('part-info-modal')" class="mt-4 w-full bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-700 transition-colors">Close</button>
+        </div>
+    </div>
+    
+    <!-- NEW: Auth Modal -->
+    <div id="auth-modal" class="modal-overlay" onclick="closeModal('auth-modal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 class="text-2xl font-bold text-center mb-4">Login or Sign Up</h2>
+            <p id="auth-error" class="text-red-500 text-sm text-center mb-4"></p>
+            <form id="email-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <input type="email" id="email" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                        <input type="password" id="password" class="form-input w-full p-2 border border-slate-300 rounded-md" required>
+                    </div>
+                </div>
+                <div class="flex space-x-2 mt-6">
+                    <button type="button" onclick="handleEmailLogin()" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">Login</button>
+                    <button type="button" onclick="handleEmailSignUp()" class="w-full bg-slate-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-slate-700 transition-colors">Sign Up</button>
+                </div>
+            </form>
+            <div class="my-4 flex items-center">
+                <div class="flex-grow border-t border-slate-300"></div>
+                <span class="flex-shrink mx-4 text-slate-400">OR</span>
+                <div class="flex-grow border-t border-slate-300"></div>
+            </div>
+            <button onclick="handleGoogleSignIn()" class="w-full flex items-center justify-center bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5 mr-2" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#34A853" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#FBBC05" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#EA4335" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.012 36.49 44 30.861 44 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
+                Sign In with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // ===================================================================================
+        // IMPORTANT: PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE
+        // ===================================================================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyA_gGulGNqRqSb9LBkws_vEwgWNEFBtQuY",
+          authDomain: "the-spoke-and-compass-app.firebaseapp.com",
+          projectId: "the-spoke-and-compass-app",
+          storageBucket: "the-spoke-and-compass-app.appspot.com",
+          messagingSenderId: "685145645537",
+          appId: "1:685145645537:web:b7a373c26889427ea4f2a0",
+          measurementId: "G-GTBQ78QZ5C"
+        };
+        // ===================================================================================
+
+        const appId = 'spoke-and-compass-app';
+
+        // Import statements for Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc, onSnapshot, query, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- GLOBAL APP STATE ---
+        let app, auth, db;
+        let userId = null;
+        let bikesUnsubscribe = null; // To detach the real-time listener
+
+        // --- INITIALIZATION ---
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            // NEW: Add a console log to help debug
+            console.log("Firebase Initialized Successfully. Project ID:", firebaseConfig.projectId);
+            setupAuthStateObserver();
+        } catch (e) {
+            console.error("Firebase initialization failed. Please add your Firebase config.", e);
+            document.getElementById('auth-container').innerHTML = '<p>Firebase config missing.</p>';
+        }
+        
+        // --- AUTHENTICATION ---
+        function setupAuthStateObserver() {
+            onAuthStateChanged(auth, user => {
+                const authContainer = document.getElementById('auth-container');
+                if (user) {
+                    userId = user.uid;
+                    authContainer.innerHTML = `
+                        <p>Signed in as: <span class="font-semibold">${user.email || 'Anonymous User'}</span></p>
+                        <button onclick="handleSignOut()" class="text-blue-600 hover:underline">Logout</button>
+                    `;
+                    if (bikesUnsubscribe) bikesUnsubscribe();
+                    setupGarageListener();
+                } else {
+                    userId = null;
+                    authContainer.innerHTML = `
+                        <button onclick="openModal('auth-modal')" class="bg-blue-600 text-white font-semibold py-1 px-3 rounded-lg shadow-sm hover:bg-blue-700 transition-colors text-xs">Login / Sign Up</button>
+                    `;
+                    if (bikesUnsubscribe) {
+                        bikesUnsubscribe();
+                        bikesUnsubscribe = null;
+                    }
+                    renderGarage([]); // Clear the garage when logged out
+                }
+            });
+        }
+        
+        // Make key functions globally accessible
+        window.calculateFit = calculateFit;
+        window.calculatePressure = calculatePressure;
+        window.showPage = showPage;
+        window.switchUnits = switchUnits;
+        window.toggleAccordion = toggleAccordion;
+        window.resetAllChecklists = resetAllChecklists;
+        window.showPartInfo = showPartInfo;
+        window.closeModal = closeModal;
+        window.openModal = (modalId) => document.getElementById(modalId).classList.add('active');
+        window.showAddBikeView = showAddBikeView;
+        window.renderGarage = renderGarage;
+        window.showBikeDetailView = showBikeDetailView;
+        window.handleDeleteBike = handleDeleteBike;
+        window.handleEmailLogin = handleEmailLogin;
+        window.handleEmailSignUp = handleEmailSignUp;
+        window.handleGoogleSignIn = handleGoogleSignIn;
+        window.handleSignOut = handleSignOut;
+
+
+        // --- App State & Navigation ---
+        let currentPage = 'home';
+        let currentUnits = 'metric';
+        const pages = document.querySelectorAll('.page');
+        const navButtons = document.querySelectorAll('.nav-button');
+        
+        function showPage(pageId) {
+            currentPage = pageId;
+            pages.forEach(page => page.classList.toggle('active', page.id === pageId));
+            updateNavButtons();
+            if (pageId === 'garage') {
+                renderGarage();
+            }
+        }
+        
+        function updateNavButtons() {
+            const pageIdForButton = currentPage.startsWith('fit-') ? 'fit-finder' : currentPage;
+            navButtons.forEach(button => {
+                const buttonPage = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.classList.toggle('bg-white', buttonPage === pageIdForButton);
+                button.classList.toggle('text-blue-600', buttonPage === pageIdForButton);
+                button.classList.toggle('text-slate-600', buttonPage !== pageIdForButton);
+            });
+        }
+        
+        function switchUnits(unit) {
+            currentUnits = unit;
+            document.getElementById('metric-inputs').style.display = unit === 'metric' ? 'block' : 'none';
+            document.getElementById('imperial-inputs').style.display = unit === 'imperial' ? 'block' : 'none';
+            
+            document.getElementById('unit-metric-btn').classList.toggle('active', unit === 'metric');
+            document.getElementById('unit-imperial-btn').classList.toggle('active', unit === 'imperial');
+        }
+
+        function toggleAccordion(id, arrowId) {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById(arrowId);
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                arrow.classList.remove('open');
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                arrow.classList.add('open');
+            }
+        }
+
+        // --- Data Structures ---
+        const bikeDatabase = {
+            road: [
+                { brand: 'Trek', model: 'Madone SL 6', style: 'race', level: 'aggressive', sizes: [50, 52, 54, 56, 58], url: 'https://www.trekbikes.com/' },
+                { brand: 'Specialized', model: 'S-Works Tarmac SL8', style: 'race', level: 'aggressive', sizes: [44, 49, 52, 54, 56, 58, 61], url: 'https://www.specialized.com/' },
+                { brand: 'Cervélo', model: 'S5', style: 'race', level: 'aggressive', sizes: [48, 51, 54, 56, 58, 61], url: 'https://www.cervelo.com/' },
+                { brand: 'Canyon', model: 'Aeroad CF SL', style: 'race', level: 'aggressive', sizes: [47, 50, 52, 54, 56, 58, 60], url: 'https://www.canyon.com/' },
+                { brand: 'Trek', model: 'Émonda SL 5', style: 'race', level: 'performance', sizes: [47, 50, 52, 54, 56, 58, 60, 62], url: 'https://www.trekbikes.com/' },
+                { brand: 'Specialized', model: 'Aethos Comp', style: 'race', level: 'performance', sizes: [44, 49, 52, 54, 56, 58, 61], url: 'https://www.specialized.com/' },
+                { brand: 'Canyon', model: 'Endurace CF 7', style: 'endurance', level: 'performance', sizes: [47, 50, 52, 54, 56, 58, 60], url: 'https://www.canyon.com/' },
+                { brand: 'Look', model: '765 Optimum', style: 'endurance', level: 'performance', sizes: [49, 51, 53, 55, 57], url: 'https://www.lookcycle.com/' },
+                { brand: 'Trek', model: 'Domane SL 5', style: 'endurance', level: 'comfort', sizes: [47, 50, 52, 54, 56, 58, 60, 62], url: 'https://www.trekbikes.com/' },
+                { brand: 'Specialized', model: 'Roubaix Comp', style: 'endurance', level: 'comfort', sizes: [44, 49, 52, 54, 56, 58, 61], url: 'https://www.specialized.com/' },
+                { brand: 'Cervélo', model: 'Caledonia', style: 'endurance', level: 'comfort', sizes: [48, 51, 54, 56, 58, 61], url: 'https://www.cervelo.com/' },
+            ],
+            gravel: [
+                { brand: 'Trek', model: 'Checkpoint ALR 5', style: 'endurance', level: 'performance', sizes: [49, 52, 54, 56, 58, 61], url: 'https://www.trekbikes.com/' },
+                { brand: 'Specialized', model: 'Diverge Comp Carbon', style: 'endurance', level: 'performance', sizes: [49, 52, 54, 56, 58, 61], url: 'https://www.specialized.com/' },
+                { brand: 'Canyon', model: 'Grizl CF SL 7', style: 'endurance', level: 'performance', sizes: [49, 52, 54, 56, 58, 60], url: 'https://www.canyon.com/' },
+                { brand: 'Cervélo', model: 'Áspero', style: 'race', level: 'aggressive', sizes: [48, 51, 54, 56, 58, 61], url: 'https://www.cervelo.com/' }
+            ],
+            tt: [
+                { brand: 'Cervélo', model: 'P-Series', style: 'race', level: 'aggressive', sizes: [48, 51, 54, 56, 58, 61], url: 'https://www.cervelo.com/' },
+                { brand: 'Felt', model: 'IA Advanced', style: 'race', level: 'aggressive', sizes: [48, 51, 54, 56, 58], url: 'https://feltbicycles.com/' },
+                { brand: 'Canyon', model: 'Speedmax CF 8', style: 'race', level: 'aggressive', sizes: [49, 52, 54, 56, 58], url: 'https://www.canyon.com/' }
+            ],
+            mtb: [
+                { brand: 'Trek', model: 'Fuel EX 8', style: 'trail', level: 'performance', sizes: ['S', 'M', 'L', 'XL'], url: 'https://www.trekbikes.com/' },
+                { brand: 'Specialized', model: 'Stumpjumper Comp', style: 'trail', level: 'performance', sizes: ['S2', 'S3', 'S4', 'S5'], mapping: {'S': 'S2', 'M': 'S3', 'L': 'S4', 'XL': 'S5'}, url: 'https://www.specialized.com/' },
+                { brand: 'Canyon', model: 'Spectral 29 CF 7', style: 'trail', level: 'performance', sizes: ['S', 'M', 'L', 'XL'], url: 'https://www.canyon.com/' }
+            ]
+        };
+
+        const roadSizeChart = [
+            { heightMin: 152, heightMax: 160, inseamMin: 68, inseamMax: 74, size: 48 }, // 5'0" - 5'3"
+            { heightMin: 160, heightMax: 168, inseamMin: 72, inseamMax: 78, size: 52 }, // 5'3" - 5'6"
+            { heightMin: 168, heightMax: 175, inseamMin: 76, inseamMax: 82, size: 54 }, // 5'6" - 5'9"
+            { heightMin: 175, heightMax: 183, inseamMin: 80, inseamMax: 86, size: 56 }, // 5'9" - 6'0"
+            { heightMin: 183, heightMax: 191, inseamMin: 84, inseamMax: 90, size: 58 }, // 6'0" - 6'3"
+            { heightMin: 191, heightMax: 198, inseamMin: 88, inseamMax: 94, size: 60 }  // 6'3" - 6'6"
+        ];
+        
+        const checklistsData = {
+            casualRide: {
+                title: "1-2 Hour Casual Ride",
+                essentials: ["Helmet", "Water Bottle", "Phone, ID, & Payment", "Front & Rear Lights", "Small Snack (e.g., Granola Bar)"],
+                repairKit: ["Multi-tool with chain breaker", "Tire Levers", "Spare Tube or Tubeless Plug Kit", "CO2 Inflator or Mini-Pump"]
+            },
+            groupRide: {
+                title: "4-6 Hour Group Ride",
+                essentials: ["Helmet", "2x Water Bottles (1 with electrolytes)", "Cycling Computer", "Phone, ID, & Payment", "Front & Rear Lights", "Ample Nutrition (3-4 gels/bars)"],
+                repairKit: ["Multi-tool with chain breaker", "Tire Levers", "2x Spare Tubes or Tubeless Plug Kit", "2x CO2 Cartridges or Mini-Pump", "Quick Link"]
+            },
+            sprintRace: {
+                title: "Sprint / Olympic Race",
+                essentials: ["Tri-Suit or Race Kit", "Helmet", "Race Number Belt", "Goggles & Swim Cap", "Bike Shoes", "Running Shoes", "Nutrition for Bike & Run (gels/chews)", "Water Bottles"],
+                repairKit: ["Minimalist Kit: CO2 Inflator & Spare Tube/Plugs (optional, for training races)"]
+            },
+            halfIronman: {
+                title: "Half Ironman (70.3)",
+                essentials: ["Tri-Suit", "Wetsuit (if applicable)", "Helmet", "Race Number Belt", "Goggles & Swim Cap", "Bike & Run Shoes", "Sunglasses", "Sunscreen", "Salt Tablets", "Detailed Nutrition Plan (gels, chews, bars)", "Special Needs Bags"],
+                repairKit: ["Full Flat Kit: CO2 Inflator, Spare Tube/Plugs, Tire Levers", "Small Multi-tool"]
+            },
+            fullIronman: {
+                title: "Full Ironman (140.6)",
+                essentials: ["Everything for a Half Ironman", "Extra Nutrition for all stages", "Anti-Chafe Cream", "Potential for change of clothes/socks", "Backup nutrition in Special Needs Bags"],
+                repairKit: ["Full Flat Kit is mandatory", "Consider a spare derailleur hanger if traveling"]
+            }
+        };
+
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('home');
+            switchUnits('metric');
+            generateChecklistsAccordion();
+        });
+
+        // --- Fit Finder Logic ---
+        function calculateFit() {
+            try {
+                let heightCm, inseamCm;
+                const INCH_TO_CM = 2.54;
+
+                if (currentUnits === 'imperial') {
+                    const heightIn = parseFloat(document.getElementById('height-in').value) || 0;
+                    const inseamIn = parseFloat(document.getElementById('inseam-in').value) || 0;
+                    if (heightIn <= 0 || inseamIn <= 0) {
+                        alert("Please enter valid measurements in inches.");
+                        return;
+                    }
+                    heightCm = heightIn * INCH_TO_CM;
+                    inseamCm = inseamIn * INCH_TO_CM;
+                } else {
+                    heightCm = parseFloat(document.getElementById('height-cm').value) || 0;
+                    inseamCm = parseFloat(document.getElementById('inseam-cm').value) || 0;
+                }
+
+                if (isNaN(heightCm) || isNaN(inseamCm) || heightCm <= 0 || inseamCm <= 0) {
+                    alert("Please enter valid measurements.");
+                    return;
+                }
+
+                const bikeCategory = document.getElementById('bike-category').value;
+                const ridingStyle = document.getElementById('riding-style').value;
+
+                let recommendedSize, frameSizeUnit = 'cm',
+                    explanation = '';
+                let saddleHeight = (inseamCm * 0.883).toFixed(1);
+                let searchSize;
+
+                if (bikeCategory === 'road' || bikeCategory === 'gravel' || bikeCategory === 'tt') {
+                    const chartEntry = roadSizeChart.find(entry => heightCm >= entry.heightMin && heightCm <= entry.heightMax);
+
+                    if (!chartEntry) {
+                        alert("Your measurements are outside the typical range of our chart. Please double-check your entries.");
+                        return;
+                    }
+
+                    recommendedSize = chartEntry.size;
+                    explanation = `Based on your height, a **${recommendedSize}cm** frame is the recommended starting point. `;
+
+                    if (inseamCm < chartEntry.inseamMin) {
+                        explanation += "You appear to have proportionally shorter legs for your height. You should be comfortable on this size, but may prefer a shorter crank length.";
+                    } else if (inseamCm > chartEntry.inseamMax) {
+                        explanation += `You appear to have proportionally longer legs for your height. You might feel more comfortable on the next size up (**${recommendedSize + 2}cm**). Testing both sizes is highly recommended.`;
+                    } else {
+                        explanation += "Your body proportions are well-matched for this frame size.";
+                    }
+                    searchSize = recommendedSize;
+
+                } else if (bikeCategory === 'mtb') {
+                    frameSizeUnit = '';
+                    if (heightCm < 165) { recommendedSize = 'Small (S)'; searchSize = 'S';}
+                    else if (heightCm < 178) { recommendedSize = 'Medium (M)'; searchSize = 'M';}
+                    else if (heightCm < 188) { recommendedSize = 'Large (L)'; searchSize = 'L';}
+                    else { recommendedSize = 'Extra Large (XL)'; searchSize = 'XL';}
+                    explanation = `For a Mountain Bike, you should look for a size ${recommendedSize}. MTB sizing focuses on reach and control. `;
+                }
+
+                document.getElementById('frame-size-label').textContent = `Recommended ${bikeCategory.toUpperCase()} Frame Size`;
+                document.getElementById('frame-size-result').textContent = `${recommendedSize}${frameSizeUnit}`;
+                document.getElementById('saddle-height-result').textContent = `${saddleHeight} cm`;
+
+                if (bikeCategory === 'mtb') {
+                    document.getElementById('saddle-height-label').style.display = 'none';
+                    document.getElementById('saddle-height-result').style.display = 'none';
+                    document.getElementById('saddle-height-subtext').style.display = 'none';
+                } else {
+                    document.getElementById('saddle-height-label').style.display = 'block';
+                    document.getElementById('saddle-height-result').style.display = 'block';
+                    document.getElementById('saddle-height-subtext').style.display = 'block';
+                    explanation += ` Your starting saddle height of ${saddleHeight}cm is a separate calculation for setting up your bike after purchase.`;
+                }
+
+                document.getElementById('fit-explanation').innerHTML = explanation;
+
+                const bikeListContainer = document.getElementById('bike-list');
+                bikeListContainer.innerHTML = '';
+                const matchingBikes = findMatchingBikes(bikeCategory, searchSize, ridingStyle);
+
+                if (matchingBikes.length > 0) {
+                    matchingBikes.forEach(bike => {
+                        const bikeCard = `
+                        <div class="border border-slate-200 rounded-lg p-4 flex justify-between items-center bg-white shadow-sm">
+                            <div>
+                                <p class="font-bold text-slate-800">${bike.brand}</p>
+                                <p class="text-sm text-slate-600">${bike.model}</p>
+                            </div>
+                            <a href="${bike.url}" target="_blank" rel="noopener noreferrer" class="bg-blue-100 text-blue-700 text-sm font-semibold py-2 px-4 rounded-full hover:bg-blue-200 transition-colors">
+                                View Bike
+                            </a>
+                        </div>
+                    `;
+                        bikeListContainer.innerHTML += bikeCard;
+                    });
+                } else {
+                    bikeListContainer.innerHTML = `<p class="text-slate-500 text-center">No specific models found in our database for a '${ridingStyle}' style in this size. Try 'Endurance' or check manufacturer websites directly.</p>`;
+                }
+
+                showPage('fit-results');
+            } catch (error) {
+                console.error("An error occurred during fit calculation:", error);
+                alert("Sorry, an unexpected error occurred. Please double-check your inputs and try again.");
+            }
+        }
+
+        function findMatchingBikes(category, size, style) {
+            const bikes = bikeDatabase[category] || [];
+            
+            if (category === 'mtb' || category === 'tt') {
+                return bikes.filter(bike => {
+                    if (category === 'mtb') {
+                        const searchSizeSimple = size;
+                        if (bike.mapping) {
+                            const mappedSize = bike.mapping[searchSizeSimple];
+                            return bike.sizes.includes(mappedSize);
+                        }
+                        return bike.sizes.includes(searchSizeSimple);
+                    }
+                    return bike.sizes.some(availableSize => Math.abs(availableSize - size) <= 2); 
+                });
+            }
+
+            let targetLevels = [];
+            if (style === 'race') {
+                targetLevels = ['aggressive', 'performance'];
+            } else if (style === 'endurance') {
+                targetLevels = ['performance', 'comfort'];
+            } else if (style === 'comfort') {
+                targetLevels = ['comfort'];
+            }
+            
+            return bikes.filter(bike => {
+                const styleMatch = targetLevels.includes(bike.level);
+                if (!styleMatch) return false;
+                return bike.sizes.some(availableSize => Math.abs(availableSize - size) <= 2);
+            });
+        }
+
+        // --- Advanced Pressure Dial Logic ---
+        function calculatePressure() {
+            const riderWeight = parseFloat(document.getElementById('rider-weight').value);
+            const bikeWeight = parseFloat(document.getElementById('bike-weight').value);
+            const tireWidth = parseInt(document.getElementById('tire-width').value);
+            const bikeType = document.getElementById('bike-type').value;
+            const tubeType = document.getElementById('tube-type').value;
+            const tireQuality = document.getElementById('tire-quality').value;
+
+            if (isNaN(riderWeight) || riderWeight <= 0 || isNaN(bikeWeight) || bikeWeight <= 0) { alert("Please enter a valid rider and bike weight."); return; }
+
+            const totalWeight = riderWeight + bikeWeight;
+            const basePressureForWidth = { 25: 90, 28: 78, 30: 70, 32: 62, 35: 50, 38: 42, 42: 35 };
+            let calculatedBasePressure = basePressureForWidth[tireWidth] || 75;
+            const weightAdjustment = (totalWeight - 170) * 0.2;
+            calculatedBasePressure += weightAdjustment;
+
+            let multiplier = 1.0;
+            if (bikeType === 'gravel') multiplier *= 0.70;
+            if (bikeType === 'tt') multiplier *= 1.05;
+            if (tubeType === 'butyl') multiplier *= 1.08;
+            if (tubeType === 'tubeless') multiplier *= 0.92;
+            if (tubeType === 'latex') multiplier *= 0.95;
+            if (tubeType === 'tpu') multiplier *= 0.97;
+            if (tireQuality === 'performance') multiplier *= 0.97;
+            else multiplier *= 1.03;
+
+            let finalPressure = calculatedBasePressure * multiplier;
+            const minPressure = bikeType === 'gravel' ? 25 : 55;
+            const maxPressure = 115;
+            finalPressure = Math.max(minPressure, Math.min(finalPressure, maxPressure));
+
+            const rearPressure = Math.round(finalPressure * 1.02);
+            const frontPressure = Math.round(finalPressure * 0.98);
+
+            document.getElementById('front-pressure-result').textContent = Math.max(minPressure, frontPressure);
+            document.getElementById('rear-pressure-result').textContent = Math.min(maxPressure, rearPressure);
+            document.getElementById('pressure-results').style.display = 'block';
+        }
+        
+        // --- Resources Page Logic ---
+        function generateChecklistsAccordion() {
+            const container = document.getElementById('checklist-accordion');
+            if (!container) return;
+            container.innerHTML = '';
+            let i = 0;
+            for (const key in checklistsData) {
+                const checklist = checklistsData[key];
+                const accordionId = `checklist-content-${i}`;
+                const arrowId = `checklist-arrow-${i}`;
+                
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'border border-slate-200 rounded-lg bg-slate-50';
+                
+                let contentHTML = '<div class="space-y-4">';
+
+                contentHTML += '<div><h4 class="font-semibold text-slate-700 mb-2">Essentials</h4><div class="space-y-2">';
+                checklist.essentials.forEach((item, index) => {
+                    const uniqueId = `${key}-ess-${index}`;
+                    contentHTML += `
+                        <div class="flex items-center">
+                            <input id="${uniqueId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" onclick="toggleChecklistItem(this, 'label-${uniqueId}')">
+                            <label id="label-${uniqueId}" for="${uniqueId}" class="ml-3 block text-sm font-medium text-slate-700 checklist-item">${item}</label>
+                        </div>
+                    `;
+                });
+                contentHTML += '</div></div>';
+
+                contentHTML += '<div><h4 class="font-semibold text-slate-700 mb-2">Repair & Safety Kit</h4><div class="space-y-2">';
+                checklist.repairKit.forEach((item, index) => {
+                    const uniqueId = `${key}-rep-${index}`;
+                    contentHTML += `
+                        <div class="flex items-center">
+                            <input id="${uniqueId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" onclick="toggleChecklistItem(this, 'label-${uniqueId}')">
+                            <label id="label-${uniqueId}" for="${uniqueId}" class="ml-3 block text-sm font-medium text-slate-700 checklist-item">${item}</label>
+                        </div>
+                    `;
+                });
+                contentHTML += '</div></div></div>';
+
+                accordionItem.innerHTML = `
+                    <button onclick="toggleAccordion('${accordionId}', '${arrowId}')" class="w-full flex justify-between items-center text-left p-4">
+                        <h3 class="text-md font-bold text-slate-900">${checklist.title}</h3>
+                        <svg id="${arrowId}" class="w-5 h-5 text-slate-500 transition-transform accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="${accordionId}" class="accordion-content px-4">
+                        <div class="pb-4">${contentHTML}</div>
+                    </div>
+                `;
+                container.appendChild(accordionItem);
+                i++;
+            }
+        }
+
+        function toggleChecklistItem(checkbox, labelId) {
+            const label = document.getElementById(labelId);
+            label.classList.toggle('checked', checkbox.checked);
+        }
+        
+        function resetAllChecklists() {
+            const checkboxes = document.querySelectorAll('#checklist-accordion input[type="checkbox"]');
+            checkboxes.forEach(box => {
+                box.checked = false;
+                document.getElementById(`label-${box.id}`).classList.remove('checked');
+            });
+        }
+
+        function showPartInfo(name, description) {
+            document.getElementById('part-name').textContent = name;
+            document.getElementById('part-description').textContent = description;
+            document.getElementById('part-info-modal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            const authError = document.getElementById('auth-error');
+            if (authError) authError.textContent = '';
+        }
+
+        // --- GARAGE LOGIC (WITH FIRESTORE) ---
+
+        function getBikesCollectionRef() {
+            if (!userId) return null;
+            return collection(db, 'artifacts', appId, 'users', userId, 'bikes');
+        }
+
+        function setupGarageListener() {
+            const bikesCollection = getBikesCollectionRef();
+            if (!bikesCollection) return;
+
+            bikesUnsubscribe = onSnapshot(query(bikesCollection), (snapshot) => {
+                const bikes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentPage === 'garage') {
+                    renderGarage(bikes);
+                }
+            }, (error) => {
+                console.error("Error with garage listener:", error);
+            });
+        }
+        
+        async function renderGarage(bikes = null) {
+            const garageContainer = document.getElementById('garage');
+            garageContainer.innerHTML = `
+                <div id="garage-list-view">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-slate-900">My Garage</h2>
+                            <button onclick="showAddBikeView()" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors text-sm">Add Bike</button>
+                        </div>
+                        <div id="bike-list-garage" class="space-y-3">
+                            <p class="text-center text-slate-500 py-4">Loading bikes...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (!userId) {
+                 document.getElementById('bike-list-garage').innerHTML = `<p class="text-center text-slate-500 py-4">Please log in to see your garage.</p>`;
+                 return;
+            }
+
+            if (bikes === null) {
+                try {
+                    const snapshot = await getDocs(query(getBikesCollectionRef()));
+                    bikes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (error) {
+                    console.error("Error fetching bikes manually:", error);
+                    document.getElementById('bike-list-garage').innerHTML = `<p class="text-center text-red-500 py-4">Could not load bikes.</p>`;
+                    return;
+                }
+            }
+
+            const bikeListContainer = document.getElementById('bike-list-garage');
+            bikeListContainer.innerHTML = ''; 
+
+            if (bikes.length === 0) {
+                bikeListContainer.innerHTML = `<p class="text-center text-slate-500 py-4">Your garage is empty. Add your first bike!</p>`;
+            } else {
+                bikes.forEach(bike => {
+                    const bikeCard = `
+                        <div class="border border-slate-200 rounded-lg p-4 flex justify-between items-center bg-white shadow-sm cursor-pointer hover:bg-slate-50" onclick="showBikeDetailView('${bike.id}')">
+                            <div>
+                                <p class="font-bold text-slate-800">${bike.nickname}</p>
+                                <p class="text-sm text-slate-600">${bike.brand} ${bike.model}</p>
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg>
+                        </div>
+                    `;
+                    bikeListContainer.innerHTML += bikeCard;
+                });
+            }
+        }
+
+        async function showAddBikeView(bikeId = null) {
+            const garageContainer = document.getElementById('garage');
+            garageContainer.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-2xl font-bold text-slate-900 mb-4">Loading...</h2></div>`;
+            
+            let bike = null;
+            if (bikeId) {
+                const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', bikeId);
+                const docSnap = await getDoc(bikeRef);
+                if (docSnap.exists()) {
+                    bike = { id: docSnap.id, ...docSnap.data() };
+                }
+            }
+
+            const isEditing = !!bike;
+            garageContainer.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">${isEditing ? 'Edit Bike' : 'Add a New Bike'}</h2>
+                    <form id="add-bike-form">
+                        <input type="hidden" id="bike-id" value="${bike?.id || ''}">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="bike-nickname" class="block text-sm font-medium text-slate-700 mb-1">Bike Nickname</label>
+                                <input type="text" id="bike-nickname" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., The Blue Bomber" value="${bike?.nickname || ''}" required>
+                            </div>
+                            <div>
+                                <label for="bike-brand" class="block text-sm font-medium text-slate-700 mb-1">Brand</label>
+                                <input type="text" id="bike-brand" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., Trek" value="${bike?.brand || ''}" required>
+                            </div>
+                            <div>
+                                <label for="bike-model" class="block text-sm font-medium text-slate-700 mb-1">Model</label>
+                                <input type="text" id="bike-model" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., Madone" value="${bike?.model || ''}" required>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 mt-6">
+                            <button type="button" onclick="renderGarage()" class="w-full bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors">Cancel</button>
+                            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">${isEditing ? 'Save Changes' : 'Add Bike'}</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.getElementById('add-bike-form').addEventListener('submit', handleSaveBike);
+        }
+
+        async function handleSaveBike(event) {
+            event.preventDefault();
+            if (!userId) return alert("You must be signed in to save bikes.");
+
+            const id = document.getElementById('bike-id').value;
+            const nickname = document.getElementById('bike-nickname').value;
+            const brand = document.getElementById('bike-brand').value;
+            const model = document.getElementById('bike-model').value;
+            
+            const bikeData = { nickname, brand, model };
+
+            try {
+                if (id) {
+                    const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', id);
+                    await setDoc(bikeRef, bikeData, { merge: true });
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'bikes'), bikeData);
+                }
+                renderGarage();
+            } catch (error) {
+                console.error("Error saving bike: ", error);
+                alert("Could not save bike. Please try again.");
+            }
+        }
+
+        async function showBikeDetailView(bikeId) {
+            const garageContainer = document.getElementById('garage');
+            if (!userId) return;
+
+            try {
+                const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', bikeId);
+                const docSnap = await getDoc(bikeRef);
+
+                if (!docSnap.exists()) return;
+                const bike = { id: docSnap.id, ...docSnap.data() };
+
+                let logHTML = '<p class="text-center text-slate-500 py-4">No maintenance logged yet.</p>';
+                if (bike.log && bike.log.length > 0) {
+                    logHTML = bike.log.slice().reverse().map(entry => `
+                        <div class="border-b border-slate-200 py-2">
+                            <p class="font-medium text-slate-700">${entry.entry}</p>
+                            <p class="text-xs text-slate-400">${new Date(entry.date).toLocaleDateString()}</p>
+                        </div>
+                    `).join('');
+                }
+
+                garageContainer.innerHTML = `
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-900">${bike.nickname}</h2>
+                                <p class="text-slate-500">${bike.brand} ${bike.model}</p>
+                            </div>
+                            <button onclick="renderGarage()" class="text-sm text-blue-600 hover:underline">&larr; Back to Garage</button>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">Maintenance Log</h3>
+                            <div class="space-y-2 mb-4" id="maintenance-log-list">${logHTML}</div>
+                            <form id="add-log-form">
+                                <input type="text" id="log-entry" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., New chain and cassette" required>
+                                <button type="submit" class="mt-2 w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-green-700 transition-colors">Add Log Entry</button>
+                            </form>
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t border-red-300">
+                             <button onclick="handleDeleteBike('${bike.id}')" class="w-full bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg hover:bg-red-200 transition-colors">Delete Bike</button>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('add-log-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    handleAddLogEntry(bike.id);
+                });
+            } catch (error) {
+                console.error("Error fetching bike details:", error);
+            }
+        }
+
+        async function handleAddLogEntry(bikeId) {
+            const entryInput = document.getElementById('log-entry');
+            if (!entryInput.value || !userId) return;
+
+            try {
+                const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', bikeId);
+                const docSnap = await getDoc(bikeRef);
+                
+                if (docSnap.exists()) {
+                    const bike = docSnap.data();
+                    const newLogEntry = {
+                        date: new Date().toISOString(),
+                        entry: entryInput.value
+                    };
+                    const updatedLog = bike.log ? [...bike.log, newLogEntry] : [newLogEntry];
+                    await setDoc(bikeRef, { log: updatedLog }, { merge: true });
+                    showBikeDetailView(bikeId);
+                }
+            } catch (error) {
+                console.error("Error adding log entry:", error);
+            }
+        }
+
+        async function handleDeleteBike(bikeId) {
+            if (!userId) return;
+            if (confirm('Are you sure you want to delete this bike? This action cannot be undone.')) {
+                try {
+                    const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', bikeId);
+                    await deleteDoc(bikeRef);
+                    renderGarage();
+                } catch (error) {
+                    console.error("Error deleting bike:", error);
+                }
+            }
+        }
+        
+        // --- NEW AUTH HANDLERS ---
+        function setAuthError(message) {
+            document.getElementById('auth-error').textContent = message;
+        }
+
+        async function handleEmailSignUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            setAuthError('');
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                closeModal('auth-modal');
+            } catch (error) {
+                setAuthError(error.message);
+            }
+        }
+
+        async function handleEmailLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            setAuthError('');
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                closeModal('auth-modal');
+            } catch (error) {
+                setAuthError(error.message);
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            setAuthError('');
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+                closeModal('auth-modal');
+            } catch (error) {
+                setAuthError(error.message);
+            }
+        }
+
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Sign out failed:", error);
+            }
+        }
+
+    </script>
+</body>
+</html>
+
