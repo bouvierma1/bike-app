@@ -101,6 +101,20 @@
         .auth-form-content.active {
             display: block;
         }
+        /* Profile Dropdown */
+        #profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            z-index: 40;
+            width: 200px;
+            border: 1px solid #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -108,10 +122,13 @@
     <div id="app" class="max-w-xl mx-auto p-4 sm:p-6">
 
         <!-- App Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">The Spoke & Compass</h1>
-            <p class="text-slate-500 mt-2">Your guide to a better ride.</p>
-            <div id="auth-container" class="text-xs text-slate-400 mt-2 h-4">
+        <header class="flex justify-between items-center mb-8">
+            <div class="w-1/4"></div> <!-- Empty spacer -->
+            <div class="w-1/2 text-center">
+                <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">The Spoke & Compass</h1>
+                <p class="text-slate-500 mt-2">Your guide to a better ride.</p>
+            </div>
+            <div id="auth-container" class="w-1/4 flex justify-end items-center relative text-xs text-slate-400">
                  <!-- Auth UI will be rendered here -->
             </div>
         </header>
@@ -149,7 +166,10 @@
             <!-- ======================= -->
             <div id="fit-finder" class="page">
                 <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-2xl font-bold mb-1 text-slate-900">Bike Fit Finder</h2>
+                    <div class="flex justify-between items-center mb-1">
+                        <h2 class="text-2xl font-bold text-slate-900">Bike Fit Finder</h2>
+                        <button onclick="autofillFitFinder()" class="text-sm bg-blue-100 text-blue-700 font-semibold py-1 px-3 rounded-full hover:bg-blue-200 transition-colors">Use My Profile Data</button>
+                    </div>
                     <p class="text-slate-500 mb-6">Enter your measurements to get a recommended bike size.</p>
 
                     <form id="fit-form" onsubmit="event.preventDefault(); calculateFit();">
@@ -291,7 +311,10 @@
             <!-- ======================= -->
             <div id="pressure-dial" class="page">
                 <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-2xl font-bold mb-1 text-slate-900">Advanced Pressure Dial</h2>
+                    <div class="flex justify-between items-center mb-1">
+                        <h2 class="text-2xl font-bold text-slate-900">Advanced Pressure Dial</h2>
+                        <button onclick="autofillPressureDial()" class="text-sm bg-blue-100 text-blue-700 font-semibold py-1 px-3 rounded-full hover:bg-blue-200 transition-colors">Use My Profile Data</button>
+                    </div>
                     <p class="text-slate-500 mb-6">Find your optimal tire pressure for today's ride.</p>
                     <form id="pressure-form" onsubmit="event.preventDefault(); calculatePressure();">
                         <div class="space-y-4">
@@ -394,10 +417,66 @@
             </div>
 
             <!-- ======================= -->
-            <!--   NEW: Garage Page      -->
+            <!--   Garage Page      -->
             <!-- ======================= -->
             <div id="garage" class="page">
                 <!-- This container will hold either the list or the detail view -->
+            </div>
+
+            <!-- ======================= -->
+            <!--   NEW: Profile Page     -->
+            <!-- ======================= -->
+            <div id="profile" class="page">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">My Profile</h2>
+                    <form id="profile-form">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Units</label>
+                                <div class="flex rounded-lg p-1 bg-slate-200">
+                                    <button type="button" id="profile-unit-metric-btn" onclick="switchProfileUnits('metric')" class="unit-toggle-btn flex-1 py-1 rounded-md text-sm font-medium">Metric</button>
+                                    <button type="button" id="profile-unit-imperial-btn" onclick="switchProfileUnits('imperial')" class="unit-toggle-btn flex-1 py-1 rounded-md text-sm font-medium">Imperial</button>
+                                </div>
+                            </div>
+                            <!-- Metric Profile Inputs -->
+                            <div id="profile-metric-inputs">
+                                <div>
+                                    <label for="profile-height-cm" class="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                    <input type="number" id="profile-height-cm" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="profile-inseam-cm" class="block text-sm font-medium text-slate-700 mb-1">Inseam (cm)</label>
+                                    <input type="number" id="profile-inseam-cm" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="profile-weight-kg" class="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                    <input type="number" id="profile-weight-kg" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                                </div>
+                            </div>
+                            <!-- Imperial Profile Inputs -->
+                            <div id="profile-imperial-inputs" style="display: none;">
+                                <div>
+                                    <label for="profile-height-in" class="block text-sm font-medium text-slate-700 mb-1">Height (inches)</label>
+                                    <input type="number" step="0.1" id="profile-height-in" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="profile-inseam-in" class="block text-sm font-medium text-slate-700 mb-1">Inseam (inches)</label>
+                                    <input type="number" step="0.1" id="profile-inseam-in" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="profile-weight-lbs" class="block text-sm font-medium text-slate-700 mb-1">Weight (lbs)</label>
+                                    <input type="number" id="profile-weight-lbs" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                                </div>
+                            </div>
+                            <!-- Common Inputs -->
+                            <div>
+                                <label for="profile-age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
+                                <input type="number" id="profile-age" class="form-input w-full p-2 border border-slate-300 rounded-md">
+                            </div>
+                        </div>
+                        <button type="button" onclick="handleSaveProfile()" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">Save Profile</button>
+                    </form>
+                </div>
             </div>
 
         </main>
@@ -417,10 +496,10 @@
         </div>
     </div>
     
-    <!-- NEW: Auth Modal -->
+    <!-- Auth Modal -->
     <div id="auth-modal" class="modal-overlay" onclick="closeModal('auth-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="flex border-b border-slate-200 mb-4">
+            <div class="flex justify-center border-b border-slate-200 mb-4">
                 <div id="login-tab" class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
                 <div id="signup-tab" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
             </div>
@@ -499,9 +578,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, getDocs, addDoc, setDoc, deleteDoc, onSnapshot, query, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         // --- GLOBAL APP STATE ---
-        let app, auth, db;
+        let app, auth, db, storage;
         let userId = null;
         let bikesUnsubscribe = null; // To detach the real-time listener
 
@@ -510,7 +590,7 @@
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            // NEW: Add a console log to help debug
+            storage = getStorage(app);
             console.log("Firebase Initialized Successfully. Project ID:", firebaseConfig.projectId);
             setupAuthStateObserver();
         } catch (e) {
@@ -525,8 +605,16 @@
                 if (user) {
                     userId = user.uid;
                     authContainer.innerHTML = `
-                        <p>Signed in as: <span class="font-semibold">${user.email || 'Anonymous User'}</span></p>
-                        <button onclick="handleSignOut()" class="text-blue-600 hover:underline">Logout</button>
+                        <div class="relative">
+                            <button onclick="toggleProfileDropdown()" class="flex items-center space-x-2">
+                                <span class="font-semibold text-slate-700">${user.email || 'My Account'}</span>
+                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div id="profile-dropdown" class="text-left">
+                                <a href="#" onclick="showPage('profile'); closeProfileDropdown();" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">My Profile</a>
+                                <a href="#" onclick="handleSignOut()" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Logout</a>
+                            </div>
+                        </div>
                     `;
                     if (bikesUnsubscribe) bikesUnsubscribe();
                     setupGarageListener();
@@ -563,6 +651,12 @@
         window.handleGoogleSignIn = handleGoogleSignIn;
         window.handleSignOut = handleSignOut;
         window.switchAuthTab = switchAuthTab;
+        window.handleSaveProfile = handleSaveProfile;
+        window.switchProfileUnits = switchProfileUnits;
+        window.autofillFitFinder = autofillFitFinder;
+        window.autofillPressureDial = autofillPressureDial;
+        window.toggleProfileDropdown = toggleProfileDropdown;
+        window.closeProfileDropdown = closeProfileDropdown;
 
 
         // --- App State & Navigation ---
@@ -577,6 +671,9 @@
             updateNavButtons();
             if (pageId === 'garage') {
                 renderGarage();
+            }
+            if (pageId === 'profile') {
+                loadProfile();
             }
         }
         
@@ -950,7 +1047,7 @@
             if (authError) authError.textContent = '';
         }
 
-        // --- GARAGE LOGIC (WITH FIRESTORE) ---
+        // --- GARAGE LOGIC (WITH FIRESTORE & STORAGE) ---
 
         function getBikesCollectionRef() {
             if (!userId) return null;
@@ -1011,12 +1108,13 @@
             } else {
                 bikes.forEach(bike => {
                     const bikeCard = `
-                        <div class="border border-slate-200 rounded-lg p-4 flex justify-between items-center bg-white shadow-sm cursor-pointer hover:bg-slate-50" onclick="showBikeDetailView('${bike.id}')">
+                        <div class="border border-slate-200 rounded-lg p-4 flex items-center bg-white shadow-sm cursor-pointer hover:bg-slate-50" onclick="showBikeDetailView('${bike.id}')">
+                            <img src="${bike.imageUrl || 'https://placehold.co/80x60/e2e8f0/64748b?text=No+Image'}" alt="${bike.nickname}" class="w-20 h-15 object-cover rounded-md mr-4">
                             <div>
                                 <p class="font-bold text-slate-800">${bike.nickname}</p>
                                 <p class="text-sm text-slate-600">${bike.brand} ${bike.model}</p>
                             </div>
-                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg>
+                            <svg class="w-5 h-5 text-slate-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7"></path></svg>
                         </div>
                     `;
                     bikeListContainer.innerHTML += bikeCard;
@@ -1056,6 +1154,11 @@
                                 <label for="bike-model" class="block text-sm font-medium text-slate-700 mb-1">Model</label>
                                 <input type="text" id="bike-model" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., Madone" value="${bike?.model || ''}" required>
                             </div>
+                            <div>
+                                <label for="bike-image" class="block text-sm font-medium text-slate-700 mb-1">Bike Picture</label>
+                                <input type="file" id="bike-image" class="form-input w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <img id="image-preview" src="${bike?.imageUrl || ''}" class="${bike?.imageUrl ? '' : 'hidden'} mt-4 w-full h-auto rounded-lg">
+                            </div>
                         </div>
                         <div class="flex space-x-2 mt-6">
                             <button type="button" onclick="renderGarage()" class="w-full bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors">Cancel</button>
@@ -1065,6 +1168,18 @@
                 </div>
             `;
             document.getElementById('add-bike-form').addEventListener('submit', handleSaveBike);
+            document.getElementById('bike-image').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const preview = document.getElementById('image-preview');
+                        preview.src = event.target.result;
+                        preview.classList.remove('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
         }
 
         async function handleSaveBike(event) {
@@ -1075,16 +1190,26 @@
             const nickname = document.getElementById('bike-nickname').value;
             const brand = document.getElementById('bike-brand').value;
             const model = document.getElementById('bike-model').value;
+            const imageFile = document.getElementById('bike-image').files[0];
             
-            const bikeData = { nickname, brand, model };
+            let bikeData = { nickname, brand, model };
 
             try {
-                if (id) {
-                    const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', id);
-                    await setDoc(bikeRef, bikeData, { merge: true });
-                } else {
-                    await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'bikes'), bikeData);
+                let docId = id;
+                if (!docId) { // It's a new bike, we need an ID first to name the image file
+                    const newDocRef = doc(collection(getBikesCollectionRef()));
+                    docId = newDocRef.id;
                 }
+
+                if (imageFile) {
+                    const storageRef = ref(storage, `users/${userId}/bikes/${docId}.jpg`);
+                    await uploadBytes(storageRef, imageFile);
+                    bikeData.imageUrl = await getDownloadURL(storageRef);
+                }
+
+                const bikeRef = doc(db, 'artifacts', appId, 'users', userId, 'bikes', docId);
+                await setDoc(bikeRef, bikeData, { merge: true });
+                
                 renderGarage();
             } catch (error) {
                 console.error("Error saving bike: ", error);
@@ -1122,6 +1247,8 @@
                             </div>
                             <button onclick="renderGarage()" class="text-sm text-blue-600 hover:underline">&larr; Back to Garage</button>
                         </div>
+
+                        <img src="${bike.imageUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}" alt="${bike.nickname}" class="w-full h-auto object-cover rounded-lg mb-6">
                         
                         <div class="mt-6">
                             <h3 class="text-lg font-bold text-slate-800 mb-2">Maintenance Log</h3>
@@ -1132,7 +1259,8 @@
                             </form>
                         </div>
 
-                        <div class="mt-6 pt-6 border-t border-red-300">
+                        <div class="mt-6 pt-6 border-t border-slate-200 flex space-x-2">
+                             <button onclick="showAddBikeView('${bike.id}')" class="w-full bg-slate-100 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-200 transition-colors">Edit Bike</button>
                              <button onclick="handleDeleteBike('${bike.id}')" class="w-full bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg hover:bg-red-200 transition-colors">Delete Bike</button>
                         </div>
                     </div>
@@ -1244,6 +1372,139 @@
                 await signOut(auth);
             } catch (error) {
                 console.error("Sign out failed:", error);
+            }
+        }
+        
+        // --- NEW PROFILE LOGIC ---
+        let profileUnits = 'metric';
+
+        function getProfileDocRef() {
+            if (!userId) return null;
+            return doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+        }
+
+        function switchProfileUnits(unit) {
+            profileUnits = unit;
+            document.getElementById('profile-metric-inputs').style.display = unit === 'metric' ? 'block' : 'none';
+            document.getElementById('profile-imperial-inputs').style.display = unit === 'imperial' ? 'none' : 'block';
+            document.getElementById('profile-unit-metric-btn').classList.toggle('active', unit === 'metric');
+            document.getElementById('profile-unit-imperial-btn').classList.toggle('active', unit === 'imperial');
+        }
+
+        async function loadProfile() {
+            const profileRef = getProfileDocRef();
+            if (!profileRef) return;
+
+            try {
+                const docSnap = await getDoc(profileRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('profile-age').value = data.age || '';
+                    // Populate metric fields
+                    document.getElementById('profile-height-cm').value = data.heightCm || '';
+                    document.getElementById('profile-inseam-cm').value = data.inseamCm || '';
+                    document.getElementById('profile-weight-kg').value = data.weightKg || '';
+                    // Populate imperial fields (converted)
+                    document.getElementById('profile-height-in').value = data.heightCm ? (data.heightCm / 2.54).toFixed(1) : '';
+                    document.getElementById('profile-inseam-in').value = data.inseamCm ? (data.inseamCm / 2.54).toFixed(1) : '';
+                    document.getElementById('profile-weight-lbs').value = data.weightKg ? Math.round(data.weightKg * 2.20462) : '';
+                }
+                // Default to metric view
+                switchProfileUnits('metric');
+            } catch (error) {
+                console.error("Error loading profile:", error);
+            }
+        }
+
+        async function handleSaveProfile() {
+            const profileRef = getProfileDocRef();
+            if (!profileRef) return alert("You must be logged in to save a profile.");
+
+            let heightCm, inseamCm, weightKg;
+            const age = parseInt(document.getElementById('profile-age').value) || null;
+
+            if (profileUnits === 'imperial') {
+                heightCm = (parseFloat(document.getElementById('profile-height-in').value) || 0) * 2.54;
+                inseamCm = (parseFloat(document.getElementById('profile-inseam-in').value) || 0) * 2.54;
+                weightKg = (parseFloat(document.getElementById('profile-weight-lbs').value) || 0) / 2.20462;
+            } else {
+                heightCm = parseFloat(document.getElementById('profile-height-cm').value) || 0;
+                inseamCm = parseFloat(document.getElementById('profile-inseam-cm').value) || 0;
+                weightKg = parseFloat(document.getElementById('profile-weight-kg').value) || 0;
+            }
+
+            const profileData = {
+                age,
+                heightCm: parseFloat(heightCm.toFixed(1)),
+                inseamCm: parseFloat(inseamCm.toFixed(1)),
+                weightKg: parseFloat(weightKg.toFixed(1))
+            };
+
+            try {
+                await setDoc(profileRef, profileData);
+                alert("Profile saved successfully!");
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                alert("Could not save profile. Please try again.");
+            }
+        }
+        
+        async function autofillFitFinder() {
+            const profileRef = getProfileDocRef();
+            if (!profileRef) return alert("Please log in and save your profile first.");
+            try {
+                const docSnap = await getDoc(profileRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.heightCm && data.inseamCm) {
+                        document.getElementById('height-cm').value = data.heightCm;
+                        document.getElementById('inseam-cm').value = data.inseamCm;
+                        document.getElementById('height-in').value = (data.heightCm / 2.54).toFixed(1);
+                        document.getElementById('inseam-in').value = (data.inseamCm / 2.54).toFixed(1);
+                        alert("Fit Finder fields populated from your profile.");
+                    } else {
+                        alert("No height or inseam data found in your profile.");
+                    }
+                } else {
+                    alert("No profile data found. Please save your profile first.");
+                }
+            } catch (error) {
+                console.error("Error auto-filling fit finder:", error);
+            }
+        }
+
+        async function autofillPressureDial() {
+            const profileRef = getProfileDocRef();
+            if (!profileRef) return alert("Please log in and save your profile first.");
+            try {
+                const docSnap = await getDoc(profileRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.weightKg) {
+                        document.getElementById('rider-weight').value = Math.round(data.weightKg * 2.20462);
+                        alert("Weight field populated from your profile.");
+                    } else {
+                        alert("No weight data found in your profile.");
+                    }
+                } else {
+                    alert("No profile data found. Please save your profile first.");
+                }
+            } catch (error) {
+                console.error("Error auto-filling pressure dial:", error);
+            }
+        }
+        
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profile-dropdown');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        function closeProfileDropdown() {
+             const dropdown = document.getElementById('profile-dropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
             }
         }
 
